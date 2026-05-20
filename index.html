@@ -1,0 +1,1008 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>IAB Teaser Web-App</title>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  <style>
+    :root {
+      --bg: #f4f7fb;
+      --card: #ffffff;
+      --ink: #1b365d;
+      --muted: #718197;
+      --line: #d8e0ea;
+      --soft: #eef4f9;
+      --accent: #5a7f87;
+      --accent-dark: #27436d;
+      --success: #13844d;
+      --success-soft: #edf8f1;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Arial, sans-serif;
+      color: #1f2733;
+      background:
+        radial-gradient(circle at top right, rgba(90,127,135,.14), transparent 28%),
+        linear-gradient(180deg, #f9fbfd, var(--bg));
+    }
+    .shell {
+      max-width: 1380px;
+      margin: 0 auto;
+      padding: 28px 20px 48px;
+    }
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      gap: 18px;
+      margin-bottom: 24px;
+      align-items: stretch;
+    }
+    .hero, .guide, .panel, .preview-shell, .actions {
+      background: rgba(255,255,255,.9);
+      border: 1px solid rgba(216,224,234,.95);
+      border-radius: 24px;
+      box-shadow: 0 18px 40px rgba(27,54,93,.08);
+      backdrop-filter: blur(10px);
+    }
+    .hero {
+      flex: 1.15;
+      padding: 28px;
+    }
+    .guide {
+      flex: .85;
+      padding: 24px;
+      background: linear-gradient(180deg, rgba(255,255,255,.94), rgba(238,244,249,.95));
+    }
+    .eyebrow {
+      color: var(--accent);
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+    h1 {
+      margin: 0 0 10px;
+      font-size: clamp(34px, 4vw, 54px);
+      line-height: .96;
+      color: var(--ink);
+    }
+    .hero p, .guide p {
+      color: var(--muted);
+      margin: 0;
+      line-height: 1.55;
+      font-size: 15px;
+    }
+    .guide ul {
+      margin: 14px 0 0;
+      padding-left: 18px;
+      color: #334155;
+      line-height: 1.55;
+    }
+    .workspace {
+      display: grid;
+      grid-template-columns: 440px minmax(0, 1fr);
+      gap: 22px;
+      align-items: start;
+    }
+    .form-column {
+      position: sticky;
+      top: 20px;
+      max-height: calc(100vh - 40px);
+      overflow: auto;
+      padding-right: 4px;
+    }
+    .panel {
+      padding: 18px;
+      margin-bottom: 16px;
+    }
+    .panel h2 {
+      margin: 0 0 14px;
+      color: var(--ink);
+      font-size: 22px;
+    }
+    .grid {
+      display: grid;
+      gap: 12px;
+    }
+    .grid.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    label {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 12px;
+      color: var(--ink);
+      font-weight: 700;
+    }
+    input, textarea {
+      width: 100%;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: #fff;
+      padding: 11px 12px;
+      font: inherit;
+      color: #243042;
+      outline: none;
+    }
+    textarea {
+      min-height: 90px;
+      resize: vertical;
+    }
+    input:focus, textarea:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 4px rgba(90,127,135,.12);
+    }
+    .hint {
+      margin-top: 5px;
+      color: var(--muted);
+      font-size: 11px;
+    }
+    .actions {
+      position: sticky;
+      bottom: 14px;
+      margin-top: 8px;
+      padding: 14px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+    button {
+      border: 0;
+      border-radius: 999px;
+      padding: 12px 16px;
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .primary {
+      background: var(--accent-dark);
+      color: #fff;
+    }
+    .secondary {
+      background: var(--soft);
+      color: var(--ink);
+    }
+    .status {
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .preview-shell {
+      padding: 18px;
+    }
+    .preview-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      gap: 14px;
+    }
+    .preview-head h2 {
+      margin: 0;
+      color: var(--ink);
+      font-size: 24px;
+    }
+    .preview-note {
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .page {
+      width: 816px;
+      min-height: 1056px;
+      margin: 0 auto 24px;
+      background: #fff;
+      border: 1px solid #dfe6ee;
+      box-shadow: 0 22px 48px rgba(15,23,42,.12);
+      padding: 42px 44px 52px;
+      position: relative;
+    }
+    .page-rule {
+      border-top: 1px solid var(--line);
+      margin: 0 0 28px;
+    }
+    .page-header-line {
+      color: #7e8ea3;
+      font-size: 12px;
+      margin-bottom: 10px;
+    }
+    .title-grid {
+      display: grid;
+      grid-template-columns: 1fr 120px;
+      gap: 18px;
+      align-items: start;
+    }
+    .preview-eyebrow {
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      font-size: 12px;
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+    .preview-title {
+      font-size: 40px;
+      line-height: .95;
+      color: var(--ink);
+      font-weight: 800;
+      margin: 0 0 10px;
+    }
+    .preview-subtitle {
+      font-size: 18px;
+      color: #4e5d74;
+      margin-bottom: 14px;
+    }
+    .preview-meta {
+      font-size: 14px;
+      line-height: 1.45;
+    }
+    .logo-slot {
+      width: 100%;
+      min-height: 108px;
+      display: flex;
+      align-items: flex-start;
+      justify-content: flex-end;
+    }
+    .logo-slot img {
+      max-width: 100px;
+      max-height: 100px;
+      object-fit: contain;
+    }
+    .kpi-grid {
+      margin-top: 18px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      border: 1px solid var(--line);
+      border-top: 3px solid var(--accent);
+    }
+    .kpi {
+      padding: 20px 16px 14px;
+      border-right: 1px solid var(--line);
+      text-align: center;
+    }
+    .kpi:last-child { border-right: 0; }
+    .kpi-value {
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--ink);
+      margin-bottom: 10px;
+    }
+    .kpi-label {
+      font-size: 13px;
+      color: #7b8b9f;
+    }
+    .hero-grid {
+      display: grid;
+      grid-template-columns: 1.1fr .9fr;
+      gap: 18px;
+      margin-top: 14px;
+    }
+    .facts {
+      border: 1px solid var(--line);
+    }
+    .fact-row {
+      display: grid;
+      grid-template-columns: 180px 1fr;
+      border-bottom: 1px solid var(--line);
+    }
+    .fact-row:last-child { border-bottom: 0; }
+    .fact-label, .fact-value {
+      padding: 14px 14px;
+      font-size: 14px;
+      line-height: 1.35;
+    }
+    .fact-label {
+      color: var(--ink);
+      font-weight: 700;
+    }
+    .photo-card img {
+      width: 100%;
+      max-height: 306px;
+      object-fit: cover;
+      border: 1px solid var(--line);
+      display: block;
+    }
+    .caption {
+      margin-top: 8px;
+      color: #8b99aa;
+      font-size: 12px;
+      font-style: italic;
+    }
+    .summary-text {
+      margin-top: 14px;
+      font-size: 16px;
+      line-height: 1.45;
+    }
+    .two-cards {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-top: 20px;
+    }
+    .info-card {
+      border: 1px solid var(--line);
+    }
+    .info-card-head {
+      background: var(--accent-dark);
+      color: #fff;
+      padding: 12px 14px;
+      font-weight: 700;
+      font-size: 15px;
+    }
+    .info-card-body {
+      padding: 12px 16px;
+      font-size: 14px;
+      line-height: 1.55;
+    }
+    .info-card-body ul, .section ul {
+      margin: 0;
+      padding-left: 18px;
+    }
+    .section {
+      margin-top: 20px;
+    }
+    .section h3 {
+      color: var(--ink);
+      font-size: 20px;
+      margin: 0 0 10px;
+    }
+    .section p, .section li {
+      font-size: 14px;
+      line-height: 1.5;
+    }
+    .mini-table {
+      border: 1px solid var(--line);
+      margin-top: 8px;
+    }
+    .mini-row {
+      display: grid;
+      grid-template-columns: 1fr 180px;
+      border-bottom: 1px solid var(--line);
+    }
+    .mini-row:last-child { border-bottom: 0; }
+    .mini-row div {
+      padding: 13px 14px;
+      font-size: 14px;
+    }
+    .mini-row div:first-child {
+      background: var(--soft);
+      font-weight: 700;
+      color: var(--ink);
+    }
+    .mini-row div:last-child {
+      text-align: right;
+    }
+    table.cashflow {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 8px;
+    }
+    table.cashflow th, table.cashflow td {
+      border: 1px solid var(--line);
+      padding: 11px 12px;
+      font-size: 14px;
+      text-align: right;
+    }
+    table.cashflow th:first-child,
+    table.cashflow td:first-child { text-align: center; }
+    table.cashflow thead th {
+      background: var(--accent-dark);
+      color: #fff;
+    }
+    table.cashflow tbody tr:last-child td {
+      background: var(--success-soft);
+      font-weight: 700;
+    }
+    .surplus {
+      color: var(--success);
+      font-weight: 700;
+    }
+    .page-footer {
+      position: absolute;
+      left: 44px;
+      right: 44px;
+      bottom: 22px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      color: #8b99aa;
+      padding-top: 10px;
+      border-top: 1px solid var(--line);
+    }
+    @media (max-width: 1200px) {
+      .workspace { grid-template-columns: 1fr; }
+      .form-column {
+        position: static;
+        max-height: none;
+      }
+    }
+    @media (max-width: 900px) {
+      .topbar, .title-grid, .hero-grid, .two-cards, .grid.two, .grid.three {
+        grid-template-columns: 1fr;
+        display: grid;
+      }
+      .page {
+        width: 100%;
+        padding: 24px 20px 48px;
+      }
+      .page-footer {
+        left: 20px;
+        right: 20px;
+      }
+      .fact-row {
+        grid-template-columns: 1fr;
+      }
+      .mini-row {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <section class="topbar">
+      <div class="hero">
+        <div class="eyebrow">IAB Teaser Web-App</div>
+        <h1>Teilbare Online-Version ohne Server</h1>
+        <p>Diese Version laeuft komplett im Browser. Du fuellst die Daten aus, siehst sofort die Vorschau und erzeugst die PDF direkt lokal im Browser. Dadurch kann die App als statische GitHub-Pages-Seite veroeffentlicht werden.</p>
+      </div>
+      <div class="guide">
+        <div class="eyebrow">Ablauf</div>
+        <p>Beispiel laden, Felder anpassen, Bilder hochladen und auf <strong>PDF exportieren</strong> klicken. Die Eingaben bleiben auf Wunsch lokal im Browser gespeichert.</p>
+        <ul>
+          <li>keine Python-Installation beim Endnutzer</li>
+          <li>kein Server notwendig</li>
+          <li>perfekt fuer GitHub Pages</li>
+        </ul>
+      </div>
+    </section>
+
+    <div class="workspace">
+      <div class="form-column">
+        <form id="teaser-form">
+          <section class="panel">
+            <h2>Dokument</h2>
+            <div class="grid two">
+              <div><label for="eyebrow">Kleine Ueberschrift</label><input id="eyebrow" name="eyebrow"></div>
+              <div><label for="date">Datum</label><input id="date" name="date"></div>
+              <div><label for="title">Titel</label><textarea id="title" name="title"></textarea></div>
+              <div><label for="subtitle">Untertitel / Projektbezeichnung</label><textarea id="subtitle" name="subtitle"></textarea></div>
+              <div><label for="recipient">Adressat</label><input id="recipient" name="recipient"></div>
+              <div><label for="investor_profile">Investorprofil</label><input id="investor_profile" name="investor_profile"></div>
+              <div><label for="header_line">Kopfzeile</label><input id="header_line" name="header_line"></div>
+              <div><label for="footer_note">Fusszeile</label><input id="footer_note" name="footer_note"></div>
+              <div><label for="photo_caption">Bildunterschrift</label><input id="photo_caption" name="photo_caption"></div>
+              <div><label for="pdf_title">PDF-Dateiname</label><input id="pdf_title" name="pdf_title"></div>
+            </div>
+          </section>
+
+          <section class="panel">
+            <h2>Uploads</h2>
+            <div class="grid two">
+              <div>
+                <label for="photo_file">Objektfoto</label>
+                <input id="photo_file" name="photo_file" type="file" accept="image/*">
+              </div>
+              <div>
+                <label for="logo_file">Logo</label>
+                <input id="logo_file" name="logo_file" type="file" accept="image/*">
+              </div>
+            </div>
+          </section>
+
+          <section class="panel">
+            <h2>KPI-Zahlen</h2>
+            <div class="grid three">
+              <div><label for="kpi_1_value">Wert 1</label><input id="kpi_1_value" name="kpi_1_value"></div>
+              <div><label for="kpi_2_value">Wert 2</label><input id="kpi_2_value" name="kpi_2_value"></div>
+              <div><label for="kpi_3_value">Wert 3</label><input id="kpi_3_value" name="kpi_3_value"></div>
+              <div><label for="kpi_1_label">Label 1</label><input id="kpi_1_label" name="kpi_1_label"></div>
+              <div><label for="kpi_2_label">Label 2</label><input id="kpi_2_label" name="kpi_2_label"></div>
+              <div><label for="kpi_3_label">Label 3</label><input id="kpi_3_label" name="kpi_3_label"></div>
+            </div>
+          </section>
+
+          <section class="panel">
+            <h2>Faktenblock</h2>
+            <div class="grid two">
+              <div><label for="summary_project">Investitionsobjekt</label><textarea id="summary_project" name="summary_project"></textarea></div>
+              <div><label for="summary_total_investment">Gesamtinvestition</label><textarea id="summary_total_investment" name="summary_total_investment"></textarea></div>
+              <div><label for="summary_equity_debt">Eigenkapital / Fremdkapital</label><textarea id="summary_equity_debt" name="summary_equity_debt"></textarea></div>
+              <div><label for="summary_conservative_surplus">Konservativer Jahresueberschuss</label><textarea id="summary_conservative_surplus" name="summary_conservative_surplus"></textarea></div>
+            </div>
+          </section>
+
+          <section class="panel">
+            <h2>Kurzfassung & Boxen</h2>
+            <label for="bank_summary">Kurzfassung fuer die Bank</label>
+            <textarea id="bank_summary" name="bank_summary"></textarea>
+            <div class="grid two" style="margin-top:12px;">
+              <div>
+                <label for="left_box_title">Linke Box Ueberschrift</label>
+                <input id="left_box_title" name="left_box_title">
+                <label for="left_box_bullets" style="margin-top:10px;">Linke Box Stichpunkte</label>
+                <textarea id="left_box_bullets" name="left_box_bullets"></textarea>
+                <div class="hint">Ein Stichpunkt pro Zeile</div>
+              </div>
+              <div>
+                <label for="right_box_title">Rechte Box Ueberschrift</label>
+                <input id="right_box_title" name="right_box_title">
+                <label for="right_box_bullets" style="margin-top:10px;">Rechte Box Stichpunkte</label>
+                <textarea id="right_box_bullets" name="right_box_bullets"></textarea>
+                <div class="hint">Ein Stichpunkt pro Zeile</div>
+              </div>
+            </div>
+          </section>
+
+          <section class="panel">
+            <h2>Finanzstruktur</h2>
+            <div class="grid two">
+              <div><label for="financing_title">Ueberschrift</label><input id="financing_title" name="financing_title"></div>
+              <div><label for="financing_summary">Kurzsatz</label><textarea id="financing_summary" name="financing_summary"></textarea></div>
+              <div><label for="fin_row_1_label">Zeile 1 Label</label><input id="fin_row_1_label" name="fin_row_1_label"></div>
+              <div><label for="fin_row_1_value">Zeile 1 Wert</label><input id="fin_row_1_value" name="fin_row_1_value"></div>
+              <div><label for="fin_row_2_label">Zeile 2 Label</label><input id="fin_row_2_label" name="fin_row_2_label"></div>
+              <div><label for="fin_row_2_value">Zeile 2 Wert</label><input id="fin_row_2_value" name="fin_row_2_value"></div>
+              <div><label for="fin_row_3_label">Zeile 3 Label</label><input id="fin_row_3_label" name="fin_row_3_label"></div>
+              <div><label for="fin_row_3_value">Zeile 3 Wert</label><input id="fin_row_3_value" name="fin_row_3_value"></div>
+            </div>
+          </section>
+
+          <section class="panel">
+            <h2>Ertragslogik & Kapitaldienst</h2>
+            <div class="grid two">
+              <div>
+                <label for="yield_title">Ertragslogik Ueberschrift</label>
+                <input id="yield_title" name="yield_title">
+                <label for="yield_bullets" style="margin-top:10px;">Ertragslogik Stichpunkte</label>
+                <textarea id="yield_bullets" name="yield_bullets"></textarea>
+              </div>
+              <div>
+                <label for="cashflow_title">Kapitaldienst Ueberschrift</label>
+                <input id="cashflow_title" name="cashflow_title">
+                <label for="cashflow_note" style="margin-top:10px;">Hinweis</label>
+                <textarea id="cashflow_note" name="cashflow_note"></textarea>
+              </div>
+            </div>
+            <label for="cashflow_rows" style="margin-top:12px;">Kapitaldienst-Zeilen</label>
+            <textarea id="cashflow_rows" name="cashflow_rows"></textarea>
+            <div class="hint">Format pro Zeile: Jahr | Kapitaldienst | Einnahmen | Ueberschuss</div>
+          </section>
+
+          <section class="panel">
+            <h2>Fazit</h2>
+            <div class="grid two">
+              <div><label for="conclusion_title">Ueberschrift</label><input id="conclusion_title" name="conclusion_title"></div>
+              <div></div>
+            </div>
+            <label for="conclusion_bullets">Fazit Stichpunkte</label>
+            <textarea id="conclusion_bullets" name="conclusion_bullets"></textarea>
+          </section>
+
+          <div class="actions">
+            <button class="secondary" type="button" id="load-sample">Beispiel laden</button>
+            <button class="secondary" type="button" id="clear-draft">Eingaben loeschen</button>
+            <button class="primary" type="button" id="export-pdf">PDF exportieren</button>
+            <div class="status" id="status">Bereit.</div>
+          </div>
+        </form>
+      </div>
+
+      <div class="preview-shell">
+        <div class="preview-head">
+          <div>
+            <h2>Live-Vorschau</h2>
+            <div class="preview-note">Diese Vorschau wird direkt in die PDF exportiert.</div>
+          </div>
+        </div>
+
+        <div id="pdf-root">
+          <section class="page">
+            <div class="page-header-line" data-bind="header_line"></div>
+            <div class="page-rule"></div>
+
+            <div class="title-grid">
+              <div>
+                <div class="preview-eyebrow" data-bind="eyebrow"></div>
+                <div class="preview-title" data-bind-html="title"></div>
+                <div class="preview-subtitle" data-bind="subtitle"></div>
+                <div class="preview-meta">
+                  <strong>Adressat:</strong> <span data-bind="recipient"></span>
+                  <span>&nbsp;&nbsp;&nbsp;</span>
+                  <strong>Investorprofil:</strong> <span data-bind="investor_profile"></span>
+                  <span>&nbsp;&nbsp;&nbsp;</span>
+                  <strong>Stand:</strong> <span data-bind="date"></span>
+                </div>
+              </div>
+              <div class="logo-slot">
+                <img id="logo-preview" alt="Logo" style="display:none;">
+              </div>
+            </div>
+
+            <div class="kpi-grid">
+              <div class="kpi">
+                <div class="kpi-value" data-bind="kpi_1_value"></div>
+                <div class="kpi-label" data-bind="kpi_1_label"></div>
+              </div>
+              <div class="kpi">
+                <div class="kpi-value" data-bind="kpi_2_value"></div>
+                <div class="kpi-label" data-bind="kpi_2_label"></div>
+              </div>
+              <div class="kpi">
+                <div class="kpi-value" data-bind="kpi_3_value"></div>
+                <div class="kpi-label" data-bind="kpi_3_label"></div>
+              </div>
+            </div>
+
+            <div class="hero-grid">
+              <div class="facts">
+                <div class="fact-row"><div class="fact-label">Investitionsobjekt</div><div class="fact-value" data-bind="summary_project"></div></div>
+                <div class="fact-row"><div class="fact-label">Gesamtinvestition</div><div class="fact-value" data-bind="summary_total_investment"></div></div>
+                <div class="fact-row"><div class="fact-label">Eigenkapital / Fremdkapital</div><div class="fact-value" data-bind="summary_equity_debt"></div></div>
+                <div class="fact-row"><div class="fact-label">Konservativer Jahresueberschuss</div><div class="fact-value" data-bind="summary_conservative_surplus"></div></div>
+              </div>
+              <div class="photo-card">
+                <img id="photo-preview" alt="Objektfoto" style="display:none;">
+                <div class="caption" data-bind="photo_caption"></div>
+              </div>
+            </div>
+
+            <div class="summary-text" data-bind="bank_summary"></div>
+
+            <div class="two-cards">
+              <div class="info-card">
+                <div class="info-card-head" data-bind="left_box_title"></div>
+                <div class="info-card-body"><ul id="left-box-list"></ul></div>
+              </div>
+              <div class="info-card">
+                <div class="info-card-head" data-bind="right_box_title"></div>
+                <div class="info-card-body"><ul id="right-box-list"></ul></div>
+              </div>
+            </div>
+
+            <div class="section">
+              <h3 data-bind="financing_title"></h3>
+              <div class="mini-table">
+                <div class="mini-row"><div data-bind="fin_row_1_label"></div><div data-bind="fin_row_1_value"></div></div>
+                <div class="mini-row"><div data-bind="fin_row_2_label"></div><div data-bind="fin_row_2_value"></div></div>
+                <div class="mini-row"><div data-bind="fin_row_3_label"></div><div data-bind="fin_row_3_value"></div></div>
+              </div>
+              <p data-bind="financing_summary"></p>
+            </div>
+
+            <div class="page-footer">
+              <div data-bind="footer_note"></div>
+              <div>Seite 1</div>
+            </div>
+          </section>
+
+          <section class="page">
+            <div class="page-header-line" data-bind="header_line"></div>
+            <div class="page-rule"></div>
+
+            <div class="section" style="margin-top:0;">
+              <h3 data-bind="yield_title"></h3>
+              <ul id="yield-list"></ul>
+            </div>
+
+            <div class="section">
+              <h3 data-bind="cashflow_title"></h3>
+              <table class="cashflow">
+                <thead>
+                  <tr><th>Jahr</th><th>Kapitaldienst</th><th>Einnahmen</th><th>Ueberschuss</th></tr>
+                </thead>
+                <tbody id="cashflow-body"></tbody>
+              </table>
+              <p class="caption" style="font-style:italic;" data-bind="cashflow_note"></p>
+            </div>
+
+            <div class="section">
+              <h3 data-bind="conclusion_title"></h3>
+              <ul id="conclusion-list"></ul>
+            </div>
+
+            <div class="page-footer">
+              <div data-bind="footer_note"></div>
+              <div>Seite 2</div>
+            </div>
+          </section>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const sampleConfig = {
+      document: {
+        eyebrow: "Finanzierungsanfrage fuer Bankpruefung",
+        title: "Finanzierungsunterlage fuer eine<br>IAB-Investition",
+        subtitle: "Waermepumpenprojekt Wilmersdorfer Strasse 148, 10585 Berlin",
+        recipient: "finanzierende Bank",
+        investor_profile: "privater IAB-Kunde (Beruf: Lehrer)",
+        date: "20.05.2026",
+        header_line: "Bankunterlage | IAB-Investition | Wilmersdorfer Strasse 148",
+        footer_note: "Erstellt auf Basis der bereitgestellten Projektunterlage",
+        photo_caption: "Objektansicht gemaess bereitgestellter Vorlage",
+        pdf_title: "IAB_Bankunterlage_Wilmersdorfer_Str_148"
+      },
+      kpis: [
+        { value: "134.597 EUR", label: "Finanzierungsbedarf" },
+        { value: "41.580 EUR", label: "Jahresertrag" },
+        { value: "21.390 EUR", label: "Ueberschuss Jahr 1" }
+      ],
+      summary_rows: [
+        { value: "Waermepumpenprojekt am Standort Wilmersdorfer Strasse 148, 10585 Berlin" },
+        { value: "207.072 EUR netto" },
+        { value: "72.475 EUR Eigenkapital (35 %) / 134.597 EUR Finanzierungsbedarf" },
+        { value: "41.580 EUR Einnahmen minus 20.190 EUR Kapitaldienst im Jahr 1 = 21.390 EUR" }
+      ],
+      bank_summary: "Kurzfassung fuer die Bank: Die bestehende Fernwaermeversorgung wird durch eine Waermepumpenanlage ersetzt. Die Wirtschaftlichkeit ist konservativ gerechnet und zeigt bereits im ersten Jahr einen positiven Ueberschuss.",
+      insight_columns: [
+        { title: "Projektkern", bullets: ["Standort: Wilmersdorfer Strasse 148, 10585 Berlin", "Ausgangslage: Fernwaerme, 246.658 kWh p.a.", "Neue Technik: Waermepumpenheizung"] },
+        { title: "Konservative Annahmen", bullets: ["COP fuer Kalkulation: 3,5", "SCOP laut Vorlage: 4,45", "Strombedarf kalkuliert: 70.473 kWh"] }
+      ],
+      financing: {
+        title: "Finanzstruktur",
+        rows: [
+          { label: "Kosten Waermepumpenanlage", value: "207.072 EUR" },
+          { label: "Eigenkapital (35 %)", value: "72.475 EUR" },
+          { label: "Zu finanzierender Betrag", value: "134.597 EUR" }
+        ],
+        summary: "35 % Eigenkapital reduzieren den Bankbedarf auf 134.597 EUR. Dem steht ein konservativ gerechneter operativer Jahresueberschuss von 41.580 EUR gegenueber."
+      },
+      yield_logic: {
+        title: "Ertragslogik",
+        bullets: ["Waermeverkauf p.a.: 54.265 EUR", "Stromkosten p.a.: 12.685 EUR", "Operativer Ueberschuss p.a.: 41.580 EUR", "Alle Werte netto laut Ausgangsvorlage"]
+      },
+      cashflow: {
+        title: "Kapitaldienst kompakt",
+        rows: [
+          ["2026", "20.190 EUR", "41.580 EUR", "21.390 EUR"],
+          ["2030", "17.498 EUR", "41.580 EUR", "24.082 EUR"],
+          ["2035", "14.133 EUR", "41.580 EUR", "27.447 EUR"],
+          ["Gesamt", "171.615 EUR", "415.800 EUR", "244.185 EUR"]
+        ],
+        note: "Die Ursprungsrechnung wurde fuer die Lesbarkeit verdichtet. Dargestellt sind Jahr 1, Jahr 5, Jahr 10 sowie die Gesamtsumme."
+      },
+      conclusion: {
+        title: "Fazit fuer die Bank",
+        bullets: ["Klare Investitionshoehe und abgegrenzter Finanzierungsbedarf", "Defensive Technikannahmen statt optimistischer Prognose", "Positiver Ueberschuss ab dem ersten Finanzierungsjahr", "Unterlage gezielt fuer einen IAB-Investor aufbereitet"]
+      }
+    };
+
+    const storageKey = "iab-teaser-static-draft-v1";
+    const form = document.getElementById("teaser-form");
+    const statusEl = document.getElementById("status");
+    let photoDataUrl = "";
+    let logoDataUrl = "";
+
+    function setValue(id, value) {
+      const el = document.getElementById(id);
+      if (el) el.value = value || "";
+    }
+
+    function linesFromTextarea(value) {
+      return (value || "").split("\n").map(line => line.trim()).filter(Boolean);
+    }
+
+    function cashflowRows(value) {
+      return linesFromTextarea(value).map(line => line.split("|").map(part => part.trim())).filter(row => row.length === 4);
+    }
+
+    function fillList(targetId, items) {
+      const target = document.getElementById(targetId);
+      target.innerHTML = "";
+      items.forEach(item => {
+        const li = document.createElement("li");
+        li.textContent = item;
+        target.appendChild(li);
+      });
+    }
+
+    function fillCashflow(rows) {
+      const tbody = document.getElementById("cashflow-body");
+      tbody.innerHTML = "";
+      rows.forEach((row, index) => {
+        const tr = document.createElement("tr");
+        row.forEach((cell, cellIndex) => {
+          const td = document.createElement("td");
+          td.textContent = cell;
+          if (cellIndex === 3) td.className = "surplus";
+          tr.appendChild(td);
+        });
+        tbody.appendChild(tr);
+      });
+    }
+
+    function bindText() {
+      document.querySelectorAll("[data-bind]").forEach(el => {
+        const key = el.getAttribute("data-bind");
+        const input = form.elements.namedItem(key);
+        if (input) el.textContent = input.value || "";
+      });
+      document.querySelectorAll("[data-bind-html]").forEach(el => {
+        const key = el.getAttribute("data-bind-html");
+        const input = form.elements.namedItem(key);
+        if (input) el.innerHTML = input.value || "";
+      });
+    }
+
+    function updatePreview() {
+      bindText();
+      fillList("left-box-list", linesFromTextarea(form.left_box_bullets.value));
+      fillList("right-box-list", linesFromTextarea(form.right_box_bullets.value));
+      fillList("yield-list", linesFromTextarea(form.yield_bullets.value));
+      fillList("conclusion-list", linesFromTextarea(form.conclusion_bullets.value));
+      fillCashflow(cashflowRows(form.cashflow_rows.value));
+
+      const photoPreview = document.getElementById("photo-preview");
+      const logoPreview = document.getElementById("logo-preview");
+      if (photoDataUrl) {
+        photoPreview.src = photoDataUrl;
+        photoPreview.style.display = "block";
+      } else {
+        photoPreview.style.display = "none";
+      }
+      if (logoDataUrl) {
+        logoPreview.src = logoDataUrl;
+        logoPreview.style.display = "block";
+      } else {
+        logoPreview.style.display = "none";
+      }
+
+      localStorage.setItem(storageKey, JSON.stringify({
+        values: Object.fromEntries(Array.from(form.elements).filter(el => el.name && el.type !== "file").map(el => [el.name, el.value])),
+        photoDataUrl,
+        logoDataUrl
+      }));
+    }
+
+    function applySample() {
+      setValue("eyebrow", sampleConfig.document.eyebrow);
+      setValue("title", sampleConfig.document.title);
+      setValue("subtitle", sampleConfig.document.subtitle);
+      setValue("recipient", sampleConfig.document.recipient);
+      setValue("investor_profile", sampleConfig.document.investor_profile);
+      setValue("date", sampleConfig.document.date);
+      setValue("header_line", sampleConfig.document.header_line);
+      setValue("footer_note", sampleConfig.document.footer_note);
+      setValue("photo_caption", sampleConfig.document.photo_caption);
+      setValue("pdf_title", sampleConfig.document.pdf_title);
+
+      setValue("kpi_1_value", sampleConfig.kpis[0].value);
+      setValue("kpi_1_label", sampleConfig.kpis[0].label);
+      setValue("kpi_2_value", sampleConfig.kpis[1].value);
+      setValue("kpi_2_label", sampleConfig.kpis[1].label);
+      setValue("kpi_3_value", sampleConfig.kpis[2].value);
+      setValue("kpi_3_label", sampleConfig.kpis[2].label);
+
+      setValue("summary_project", sampleConfig.summary_rows[0].value);
+      setValue("summary_total_investment", sampleConfig.summary_rows[1].value);
+      setValue("summary_equity_debt", sampleConfig.summary_rows[2].value);
+      setValue("summary_conservative_surplus", sampleConfig.summary_rows[3].value);
+
+      setValue("bank_summary", sampleConfig.bank_summary);
+      setValue("left_box_title", sampleConfig.insight_columns[0].title);
+      setValue("left_box_bullets", sampleConfig.insight_columns[0].bullets.join("\n"));
+      setValue("right_box_title", sampleConfig.insight_columns[1].title);
+      setValue("right_box_bullets", sampleConfig.insight_columns[1].bullets.join("\n"));
+
+      setValue("financing_title", sampleConfig.financing.title);
+      setValue("fin_row_1_label", sampleConfig.financing.rows[0].label);
+      setValue("fin_row_1_value", sampleConfig.financing.rows[0].value);
+      setValue("fin_row_2_label", sampleConfig.financing.rows[1].label);
+      setValue("fin_row_2_value", sampleConfig.financing.rows[1].value);
+      setValue("fin_row_3_label", sampleConfig.financing.rows[2].label);
+      setValue("fin_row_3_value", sampleConfig.financing.rows[2].value);
+      setValue("financing_summary", sampleConfig.financing.summary);
+
+      setValue("yield_title", sampleConfig.yield_logic.title);
+      setValue("yield_bullets", sampleConfig.yield_logic.bullets.join("\n"));
+      setValue("cashflow_title", sampleConfig.cashflow.title);
+      setValue("cashflow_rows", sampleConfig.cashflow.rows.map(row => row.join(" | ")).join("\n"));
+      setValue("cashflow_note", sampleConfig.cashflow.note);
+      setValue("conclusion_title", sampleConfig.conclusion.title);
+      setValue("conclusion_bullets", sampleConfig.conclusion.bullets.join("\n"));
+
+      Promise.all([
+        fetch("pdf_images/page1_img2.png").then(r => r.blob()).then(blobToDataURL),
+        fetch("pdf_images/page1_img1.png").then(r => r.blob()).then(blobToDataURL)
+      ]).then(([photo, logo]) => {
+        photoDataUrl = photo;
+        logoDataUrl = logo;
+        updatePreview();
+        statusEl.textContent = "Beispiel geladen.";
+      }).catch(() => {
+        updatePreview();
+        statusEl.textContent = "Beispiel geladen.";
+      });
+    }
+
+    function blobToDataURL(blob) {
+      return new Promise(resolve => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.readAsDataURL(blob);
+      });
+    }
+
+    function restoreDraft() {
+      const raw = localStorage.getItem(storageKey);
+      if (!raw) return false;
+      try {
+        const data = JSON.parse(raw);
+        Object.entries(data.values || {}).forEach(([key, value]) => {
+          if (form.elements.namedItem(key)) form.elements.namedItem(key).value = value;
+        });
+        photoDataUrl = data.photoDataUrl || "";
+        logoDataUrl = data.logoDataUrl || "";
+        updatePreview();
+        statusEl.textContent = "Letzte Eingaben wiederhergestellt.";
+        return true;
+      } catch {
+        return false;
+      }
+    }
+
+    function clearDraft() {
+      localStorage.removeItem(storageKey);
+      form.reset();
+      photoDataUrl = "";
+      logoDataUrl = "";
+      updatePreview();
+      statusEl.textContent = "Eingaben geloescht.";
+    }
+
+    async function exportPdf() {
+      statusEl.textContent = "PDF wird erzeugt...";
+      const { jsPDF } = window.jspdf;
+      const pages = Array.from(document.querySelectorAll("#pdf-root .page"));
+      const pdf = new jsPDF("p", "pt", "a4");
+
+      for (let i = 0; i < pages.length; i++) {
+        const canvas = await html2canvas(pages[i], {
+          scale: 2,
+          backgroundColor: "#ffffff",
+          useCORS: true
+        });
+        const imgData = canvas.toDataURL("image/jpeg", 0.96);
+        const pageWidth = pdf.internal.pageSize.getWidth();
+        const pageHeight = pdf.internal.pageSize.getHeight();
+        const ratio = Math.min(pageWidth / canvas.width, pageHeight / canvas.height);
+        const imgWidth = canvas.width * ratio;
+        const imgHeight = canvas.height * ratio;
+        if (i > 0) pdf.addPage();
+        pdf.addImage(imgData, "JPEG", 0, 0, imgWidth, imgHeight);
+      }
+
+      const fileNameBase = (form.pdf_title.value || "iab_teaser").replace(/[^\w\-]+/g, "_");
+      pdf.save(`${fileNameBase}.pdf`);
+      statusEl.textContent = "PDF exportiert.";
+    }
+
+    form.addEventListener("input", updatePreview);
+    document.getElementById("load-sample").addEventListener("click", applySample);
+    document.getElementById("clear-draft").addEventListener("click", clearDraft);
+    document.getElementById("export-pdf").addEventListener("click", exportPdf);
+
+    form.photo_file.addEventListener("change", async event => {
+      const file = event.target.files[0];
+      photoDataUrl = file ? await blobToDataURL(file) : "";
+      updatePreview();
+    });
+
+    form.logo_file.addEventListener("change", async event => {
+      const file = event.target.files[0];
+      logoDataUrl = file ? await blobToDataURL(file) : "";
+      updatePreview();
+    });
+
+    if (!restoreDraft()) {
+      applySample();
+    }
+  </script>
+</body>
+</html>
