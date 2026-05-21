@@ -907,6 +907,8 @@
       setValue("conclusion_title", sampleConfig.conclusion.title);
       setValue("conclusion_bullets", sampleConfig.conclusion.bullets.join("\n"));
 
+      updatePreview();
+
       Promise.all([
         fetch("pdf_images/page1_img2.png").then(r => r.blob()).then(blobToDataURL),
         fetch("pdf_images/page1_img1.png").then(r => r.blob()).then(blobToDataURL)
@@ -953,6 +955,7 @@
       photoDataUrl = "";
       logoDataUrl = "";
       updatePreview();
+      localStorage.removeItem(storageKey);
       statusEl.textContent = "Eingaben geloescht.";
     }
 
